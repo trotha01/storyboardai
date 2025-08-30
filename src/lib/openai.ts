@@ -15,7 +15,8 @@ export async function openaiChat(apiKey: string, payload: any) {
 
 function dataUrlToBlob(dataUrl: string) {
   const [meta, b64] = dataUrl.split(',');
-  const mime = meta.match(/data:(.*);base64/)[1];
+  const match = meta.match(/data:(.*);base64/);
+  const mime = match ? match[1] : 'image/png';
   const bin = atob(b64);
   const arr = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);

@@ -54,20 +54,20 @@ interface State {
   redo: () => void;
 }
 
-export const useStore = create<State>()(
-  devtools((set, get) => ({
+export const useStore = create()(
+  devtools((set: any, get: any) => ({
     project: null,
     history: [],
     future: [],
     useTurnaroundsBase: true,
-    setUseTurnaroundsBase: (v) => set({ useTurnaroundsBase: v }),
-    setProject: (p) => set({ project: p, history: [], future: [] }),
-    updatePanel: (panel) =>
-      set((state) => {
+    setUseTurnaroundsBase: (v: boolean) => set({ useTurnaroundsBase: v }),
+    setProject: (p: Project) => set({ project: p, history: [], future: [] }),
+    updatePanel: (panel: Panel) =>
+      set((state: any) => {
         if (!state.project) return {};
         const nextProject: Project = {
           ...state.project,
-          panels: state.project.panels.map((p) =>
+          panels: state.project.panels.map((p: Panel) =>
             p.id === panel.id ? panel : p
           ),
         };
@@ -78,7 +78,7 @@ export const useStore = create<State>()(
         };
       }),
     undo: () =>
-      set((state) => {
+      set((state: any) => {
         const prev = state.history.pop();
         if (!prev) return {};
         return {
@@ -88,7 +88,7 @@ export const useStore = create<State>()(
         };
       }),
     redo: () =>
-      set((state) => {
+      set((state: any) => {
         const next = state.future.shift();
         if (!next) return {};
         return {

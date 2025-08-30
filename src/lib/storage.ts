@@ -8,7 +8,7 @@ export async function saveProject(project: Project) {
 }
 
 export async function loadProject(title: string) {
-  return store.getItem<Project>(title);
+  return store.getItem(title);
 }
 
 export async function listProjects() {

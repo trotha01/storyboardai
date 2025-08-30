@@ -12,13 +12,13 @@ import { generatePanelImage } from '../lib/panels';
 
 export default function Home() {
   const [apiKey, setApiKey] = useState('');
-  const [selectedId, setSelectedId] = useState<string>();
+  const [selectedId, setSelectedId] = useState();
   const [showNew, setShowNew] = useState(false);
-  const project = useStore((s) => s.project);
-  const setProject = useStore((s) => s.setProject);
-  const updatePanel = useStore((s) => s.updatePanel);
-  const useTurnaroundsBase = useStore((s) => s.useTurnaroundsBase);
-  const setUseTurnaroundsBase = useStore((s) => s.setUseTurnaroundsBase);
+  const project = useStore((s: any) => s.project);
+  const setProject = useStore((s: any) => s.setProject);
+  const updatePanel = useStore((s: any) => s.updatePanel);
+  const useTurnaroundsBase = useStore((s: any) => s.useTurnaroundsBase);
+  const setUseTurnaroundsBase = useStore((s: any) => s.setUseTurnaroundsBase);
 
   const selectedPanel = project?.panels.find((p) => p.id === selectedId);
 

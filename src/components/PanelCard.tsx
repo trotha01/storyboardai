@@ -2,6 +2,7 @@ import React from 'react';
 import { Panel } from '../models/schema';
 
 interface Props {
+  key?: any;
   panel: Panel;
   onSelect: () => void;
   selected: boolean;

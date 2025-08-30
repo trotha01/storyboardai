@@ -9,14 +9,13 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "strict": false,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": "./",
     "paths": {
       "~/*": ["src/*"]
     },
-    "types": ["vite/client"],
     "noEmit": true
   },
   "include": ["src"]

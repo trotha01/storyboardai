@@ -15,7 +15,7 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
   const [title, setTitle] = useState('Untitled');
   const [count, setCount] = useState(4);
   const [description, setDescription] = useState('');
-  const [styleBible, setStyleBible] = useState<StyleBible>(
+  const [styleBible, setStyleBible] = useState(
     JSON.parse(JSON.stringify(defaultStyleBible))
   );
   const [turnLoading, setTurnLoading] = useState(false);

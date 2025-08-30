@@ -2,12 +2,8 @@ import { Project, CharacterSpec } from '../models/schema';
 import { turnaroundPrompt } from '../prompts/turnarounds';
 import { generateImage } from './openai';
 
-const VIEWS: Array<keyof Required<CharacterSpec>['turnarounds']> = [
-  'front',
-  'threeQuarter',
-  'profile',
-  'back',
-];
+const VIEWS = ['front', 'threeQuarter', 'profile', 'back'] as const;
+type View = typeof VIEWS[number];
 
 export async function generateTurnarounds(project: Project, apiKey: string) {
   const world = project.styleBible.world;
