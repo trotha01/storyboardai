@@ -8,6 +8,7 @@ import { useStore } from '../state/useStore';
 import { exportPdf } from '../lib/pdf';
 import { openaiImage } from '../lib/openai';
 import { postProcessImage } from '../lib/imagePost';
+import type { Panel } from '../models/schema';
 
 export default function Home() {
   const [apiKey, setApiKey] = useState('');
@@ -19,7 +20,7 @@ export default function Home() {
 
   const selectedPanel = project?.panels.find((p) => p.id === selectedId);
 
-  const buildImagePrompt = (panel: typeof project.panels[number]) =>
+  const buildImagePrompt = (panel: Panel) =>
     `${panel.imagePrompt}\nAction/Dialogue: ${panel.actionDialogue}\nNotes: ${panel.notes}`;
 
   const generateImages = async () => {
@@ -29,7 +30,7 @@ export default function Home() {
     }
   };
 
-  const generateImage = async (panel: typeof project.panels[number]) => {
+  const generateImage = async (panel: Panel) => {
     if (!project) return;
     try {
       const res = await openaiImage(apiKey, {
