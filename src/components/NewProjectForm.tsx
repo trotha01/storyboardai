@@ -60,7 +60,6 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
         model: 'gpt-image-1',
         prompt,
         size: '1024x1024',
-        seed: c.seedHint,
       });
       c.turnarounds = c.turnarounds || {
         front: null,

@@ -24,7 +24,6 @@ export async function generateTurnarounds(project: Project, apiKey: string) {
         model: project.imageModel,
         prompt,
         size: '1024x1024',
-        seed: c.seedHint,
       });
       tr[view] = img.dataUrl;
     }
@@ -35,7 +34,6 @@ export async function generateTurnarounds(project: Project, apiKey: string) {
         model: project.imageModel,
         prompt,
         size: '1024x1024',
-        seed: c.seedHint,
       });
       tr.expressions![expr] = img.dataUrl;
     }

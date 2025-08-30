@@ -31,7 +31,6 @@ export async function generateImage(opts: {
   mode?: 'txt2img' | 'img2img' | 'edit';
   initImageDataUrl?: string;
   maskDataUrl?: string;
-  seed?: number;
 }) {
   const {
     apiKey,
@@ -41,7 +40,6 @@ export async function generateImage(opts: {
     mode = 'txt2img',
     initImageDataUrl,
     maskDataUrl,
-    seed,
   } = opts;
 
   if (mode === 'txt2img') {
@@ -51,7 +49,7 @@ export async function generateImage(opts: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, prompt, size, seed }),
+      body: JSON.stringify({ model, prompt, size }),
     });
     if (!res.ok) throw new Error('OpenAI image error');
     const json = await res.json();
@@ -64,7 +62,6 @@ export async function generateImage(opts: {
   form.append('model', model);
   form.append('prompt', prompt);
   form.append('size', size);
-  if (seed !== undefined) form.append('seed', String(seed));
   if (initImageDataUrl) form.append('image', dataUrlToBlob(initImageDataUrl));
   if (maskDataUrl) form.append('mask', dataUrlToBlob(maskDataUrl));
 

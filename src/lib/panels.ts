@@ -32,14 +32,12 @@ export async function generatePanelImage(
       prompt,
       mode: 'img2img',
       initImageDataUrl: firstWithRef!,
-      seed: project.seed,
     });
   } else {
     return await generateImage({
       apiKey,
       model: project.imageModel,
       prompt,
-      seed: project.seed,
     });
   }
 }
