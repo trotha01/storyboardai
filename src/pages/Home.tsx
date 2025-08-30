@@ -6,6 +6,8 @@ import NewProjectForm from '../components/NewProjectForm';
 import FooterStats from '../components/FooterStats';
 import { useStore } from '../state/useStore';
 import { exportPdf } from '../lib/pdf';
+import { openaiImage } from '../lib/openai';
+import { postProcessImage } from '../lib/imagePost';
 
 export default function Home() {
   const [apiKey, setApiKey] = useState('');
@@ -16,6 +18,25 @@ export default function Home() {
   const updatePanel = useStore((s) => s.updatePanel);
 
   const selectedPanel = project?.panels.find((p) => p.id === selectedId);
+
+  const generateImages = async () => {
+    if (!project) return;
+    for (const panel of project.panels) {
+      try {
+        const res = await openaiImage(apiKey, {
+          model: project.imageModel,
+          prompt: panel.imagePrompt,
+          size: '1024x768',
+        });
+        const b64 = res.data[0].b64_json;
+        const dataUrl = `data:image/png;base64,${b64}`;
+        const processed = await postProcessImage(dataUrl);
+        updatePanel({ ...panel, imageDataUrl: processed });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
 
   return (
     <div className="app">
@@ -29,9 +50,12 @@ export default function Home() {
           const element = document.querySelector('table');
           if (element) exportPdf(element as HTMLElement);
         }}
+        onGenerateImages={generateImages}
+        hasProject={!!project}
       />
       {showNew && (
         <NewProjectForm
+          apiKey={apiKey}
           onCreate={(p) => {
             setProject(p);
             setShowNew(false);

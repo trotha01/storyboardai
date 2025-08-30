@@ -7,9 +7,20 @@ interface Props {
   onSave: () => void;
   onLoad: () => void;
   onExportPdf: () => void;
+  onGenerateImages: () => void;
+  hasProject: boolean;
 }
 
-export default function TopBar({ apiKey, setApiKey, onNew, onSave, onLoad, onExportPdf }: Props) {
+export default function TopBar({
+  apiKey,
+  setApiKey,
+  onNew,
+  onSave,
+  onLoad,
+  onExportPdf,
+  onGenerateImages,
+  hasProject,
+}: Props) {
   return (
     <div className="topbar">
       <input
@@ -22,6 +33,9 @@ export default function TopBar({ apiKey, setApiKey, onNew, onSave, onLoad, onExp
       <button onClick={onSave}>Save</button>
       <button onClick={onLoad}>Load</button>
       <button onClick={onExportPdf}>Export PDF</button>
+      <button onClick={onGenerateImages} disabled={!hasProject || !apiKey}>
+        Generate Images
+      </button>
     </div>
   );
 }
