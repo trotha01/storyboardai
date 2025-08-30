@@ -31,6 +31,7 @@ export async function generateImage(opts: {
   mode?: 'txt2img' | 'img2img' | 'edit';
   initImageDataUrl?: string;
   maskDataUrl?: string;
+  seed?: number;
 }) {
   const {
     apiKey,
@@ -40,6 +41,7 @@ export async function generateImage(opts: {
     mode = 'txt2img',
     initImageDataUrl,
     maskDataUrl,
+    seed, // accepted but ignored; OpenAI image endpoints don't support seeds
   } = opts;
 
   if (mode === 'txt2img') {
