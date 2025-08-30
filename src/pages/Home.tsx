@@ -6,9 +6,9 @@ import NewProjectForm from '../components/NewProjectForm';
 import FooterStats from '../components/FooterStats';
 import { useStore } from '../state/useStore';
 import { exportPdf } from '../lib/pdf';
-import { openaiImage } from '../lib/openai';
 import { postProcessImage } from '../lib/imagePost';
 import type { Panel } from '../models/schema';
+import { generatePanelImage } from '../lib/panels';
 
 export default function Home() {
   const [apiKey, setApiKey] = useState('');
@@ -17,30 +17,28 @@ export default function Home() {
   const project = useStore((s) => s.project);
   const setProject = useStore((s) => s.setProject);
   const updatePanel = useStore((s) => s.updatePanel);
+  const useTurnaroundsBase = useStore((s) => s.useTurnaroundsBase);
+  const setUseTurnaroundsBase = useStore((s) => s.setUseTurnaroundsBase);
 
   const selectedPanel = project?.panels.find((p) => p.id === selectedId);
 
-  const buildImagePrompt = (panel: Panel) =>
-    `${panel.imagePrompt}\nAction/Dialogue: ${panel.actionDialogue}\nNotes: ${panel.notes}`;
-
   const generateImages = async () => {
     if (!project) return;
-    for (const panel of project.panels) {
-      await generateImage(panel);
+    for (let i = 0; i < project.panels.length; i++) {
+      await generateImage(project.panels[i], project.panels[i - 1]);
     }
   };
-
-  const generateImage = async (panel: Panel) => {
+  const generateImage = async (panel: Panel, prev?: Panel) => {
     if (!project) return;
     try {
-      const res = await openaiImage(apiKey, {
-        model: project.imageModel,
-        prompt: buildImagePrompt(panel),
-        size: '1536x1024',
-      });
-      const b64 = res.data[0].b64_json;
-      const dataUrl = `data:image/png;base64,${b64}`;
-      const processed = await postProcessImage(dataUrl);
+      const res = await generatePanelImage(
+        project,
+        apiKey,
+        panel,
+        prev,
+        useTurnaroundsBase
+      );
+      const processed = await postProcessImage(res.dataUrl);
       updatePanel({ ...panel, imageDataUrl: processed });
     } catch (e) {
       console.error(e);
@@ -57,10 +55,17 @@ export default function Home() {
         onLoad={() => console.log('load')}
         onExportPdf={() => {
           const element = document.querySelector('table');
-          if (element) exportPdf(element as HTMLElement);
+          if (element)
+            exportPdf(
+              element as HTMLElement,
+              project?.projectTitle,
+              project?.styleBible.world
+            );
         }}
         onGenerateImages={generateImages}
         hasProject={!!project}
+        useTurnaroundsBase={useTurnaroundsBase}
+        setUseTurnaroundsBase={setUseTurnaroundsBase}
       />
       {showNew && (
         <NewProjectForm
@@ -77,14 +82,20 @@ export default function Home() {
             panels={project.panels}
             onSelect={(p) => setSelectedId(p.id)}
             selectedId={selectedId}
-            onGenerateImage={generateImage}
+            onGenerateImage={(p) => {
+              const idx = project.panels.findIndex((x) => x.id === p.id);
+              generateImage(p, project.panels[idx - 1]);
+            }}
           />
           <FooterStats panels={project.panels} />
           {selectedPanel && (
             <EditorSidebar
               panel={selectedPanel}
               onChange={(p) => updatePanel(p)}
-              onGenerate={generateImage}
+              onGenerate={(p) => {
+                const idx = project.panels.findIndex((x) => x.id === p.id);
+                generateImage(p, project.panels[idx - 1]);
+              }}
             />
           )}
         </>

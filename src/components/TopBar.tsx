@@ -9,6 +9,8 @@ interface Props {
   onExportPdf: () => void;
   onGenerateImages: () => void;
   hasProject: boolean;
+  useTurnaroundsBase: boolean;
+  setUseTurnaroundsBase: (v: boolean) => void;
 }
 
 export default function TopBar({
@@ -20,6 +22,8 @@ export default function TopBar({
   onExportPdf,
   onGenerateImages,
   hasProject,
+  useTurnaroundsBase,
+  setUseTurnaroundsBase,
 }: Props) {
   return (
     <div className="topbar">
@@ -36,6 +40,14 @@ export default function TopBar({
       <button onClick={onGenerateImages} disabled={!hasProject || !apiKey}>
         Generate Images
       </button>
+      <label style={{ marginLeft: '8px' }}>
+        <input
+          type="checkbox"
+          checked={useTurnaroundsBase}
+          onChange={(e) => setUseTurnaroundsBase(e.target.checked)}
+        />
+        Use Turnarounds
+      </label>
     </div>
   );
 }

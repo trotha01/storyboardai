@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
-import { Panel, Project } from '../models/schema';
-import { openaiChat } from '../lib/openai';
-import { plannerSystemPrompt } from '../prompts/planner';
+import { Panel, Project, StyleBible } from '../models/schema';
+import { openaiChat, generateImage } from '../lib/openai';
+import { PLANNER_SYSTEM, plannerUserPrompt } from '../prompts/planner';
+import { defaultStyleBible } from '../state/useStore';
+import { generateTurnarounds } from '../lib/turnarounds';
+import { turnaroundPrompt } from '../prompts/turnarounds';
 
 interface Props {
   apiKey: string;
@@ -12,27 +15,83 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
   const [title, setTitle] = useState('Untitled');
   const [count, setCount] = useState(4);
   const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const submit = async () => {
+  const [styleBible, setStyleBible] = useState<StyleBible>(
+    JSON.parse(JSON.stringify(defaultStyleBible))
+  );
+  const [turnLoading, setTurnLoading] = useState(false);
+  const [turnReady, setTurnReady] = useState(false);
+  const [accepted, setAccepted] = useState(false);
+  const [storyLoading, setStoryLoading] = useState(false);
+  const genTurnarounds = async () => {
     if (!apiKey) {
       alert('API key required');
       return;
     }
-    setLoading(true);
+    setTurnLoading(true);
+    try {
+      const proj: Project = {
+        projectTitle: title,
+        pageSize: 'A4',
+        textModel: 'gpt-4o-mini',
+        imageModel: 'gpt-image-1',
+        styleBible,
+        panels: [],
+      };
+      await generateTurnarounds(proj, apiKey);
+      setStyleBible({ ...proj.styleBible });
+      setTurnReady(true);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to generate turnarounds');
+    } finally {
+      setTurnLoading(false);
+    }
+  };
+
+  const regenerate = async (
+    ci: number,
+    view: 'front' | 'threeQuarter' | 'profile' | 'back'
+  ) => {
+    try {
+      const c = styleBible.characters[ci];
+      const prompt = turnaroundPrompt(styleBible.world, c, view as any);
+      const img = await generateImage({
+        apiKey,
+        model: 'gpt-image-1',
+        prompt,
+        size: '1024x1024',
+        seed: c.seedHint,
+      });
+      c.turnarounds = c.turnarounds || {
+        front: null,
+        threeQuarter: null,
+        profile: null,
+        back: null,
+        expressions: {},
+      };
+      (c.turnarounds as any)[view] = img.dataUrl;
+      setStyleBible({ ...styleBible });
+    } catch (e) {
+      console.error(e);
+      alert('Failed to regenerate view');
+    }
+  };
+
+  const generateStory = async () => {
+    if (!apiKey) {
+      alert('API key required');
+      return;
+    }
+    setStoryLoading(true);
     try {
       const res = await openaiChat(apiKey, {
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: plannerSystemPrompt },
-          {
-            role: 'user',
-            content: `Title: ${title}\nDescription: ${description}\nWe need ${count} panels.\n\nReturn pure JSON array of:\n{ cutNumber, timeSeconds, actionDialogue, notes, imagePrompt }`,
-          },
+          { role: 'system', content: PLANNER_SYSTEM },
+          { role: 'user', content: plannerUserPrompt(title, description, count) },
         ],
       });
       const content = res.choices[0].message.content;
-      // OpenAI may wrap JSON in Markdown code fences; extract the JSON portion
       const match = content.match(/```(?:json)?\n([\s\S]*?)```/);
       const jsonStr = match ? match[1] : content;
       const arr = JSON.parse(jsonStr);
@@ -50,13 +109,14 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
         pageSize: 'A4',
         textModel: 'gpt-4o-mini',
         imageModel: 'gpt-image-1',
+        styleBible,
         panels,
       });
     } catch (e) {
       console.error(e);
       alert('Failed to generate panels');
     } finally {
-      setLoading(false);
+      setStoryLoading(false);
     }
   };
 
@@ -73,9 +133,36 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
         value={count}
         onChange={(e) => setCount(parseInt(e.target.value, 10))}
       />
-      <button onClick={submit} disabled={loading}>
-        {loading ? 'Generating...' : 'Generate'}
-      </button>
+      {!turnReady && (
+        <button onClick={genTurnarounds} disabled={turnLoading}>
+          {turnLoading ? 'Generating...' : 'Generate Turnarounds'}
+        </button>
+      )}
+      {turnReady && !accepted && (
+        <div className="turnarounds">
+          {styleBible.characters.map((c, ci) => (
+            <div key={c.name} className="character-turnarounds">
+              <h4>{c.name}</h4>
+              {(['front', 'threeQuarter', 'profile', 'back'] as const).map(
+                (view) => (
+                  <div key={view}>
+                    {c.turnarounds && (
+                      <img src={(c.turnarounds as any)[view]} alt={view} />
+                    )}
+                    <button onClick={() => regenerate(ci, view)}>Regenerate</button>
+                  </div>
+                )
+              )}
+            </div>
+          ))}
+          <button onClick={() => setAccepted(true)}>Accept Turnarounds</button>
+        </div>
+      )}
+      {accepted && (
+        <button onClick={generateStory} disabled={storyLoading}>
+          {storyLoading ? 'Generating...' : 'Generate Storyboard'}
+        </button>
+      )}
     </div>
   );
 }
