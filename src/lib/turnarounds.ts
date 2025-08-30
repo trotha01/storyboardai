@@ -45,6 +45,7 @@ export async function generateTurnarounds(project: Project, apiKey: string) {
     });
     const slices = await splitSheet(img.dataUrl);
     c.turnarounds = {
+      sheet: img.dataUrl,
       front: slices.front,
       threeQuarter: slices.threeQuarter,
       profile: slices.profile,

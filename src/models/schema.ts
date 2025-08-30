@@ -17,6 +17,7 @@ export type Panel = {
 };
 
 export type Turnarounds = {
+  sheet: string | null;
   front: string | null;
   threeQuarter: string | null;
   profile: string | null;

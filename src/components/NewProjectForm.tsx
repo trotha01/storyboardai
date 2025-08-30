@@ -24,6 +24,35 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
   const [prompts, setPrompts] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState<Record<number, boolean>>({});
 
+  const downloadSheet = (ci: number) => {
+    const sheet = styleBible.characters[ci].turnarounds?.sheet;
+    if (!sheet) return;
+    const a = document.createElement('a');
+    a.href = sheet;
+    a.download = `${styleBible.characters[ci].name}-turnaround.png`;
+    a.click();
+  };
+
+  const handleUpload = async (ci: number, file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      const slices = await splitTurnaroundSheet(dataUrl);
+      const c = styleBible.characters[ci];
+      c.turnarounds = {
+        sheet: dataUrl,
+        front: slices.front,
+        threeQuarter: slices.threeQuarter,
+        profile: slices.profile,
+        back: slices.back,
+        expressions: {},
+      };
+      setStyleBible({ ...styleBible });
+    };
+    reader.readAsDataURL(file);
+  };
+
   const prepareTurnarounds = () => {
     const p: Record<number, string> = {};
     styleBible.characters.forEach((c, ci) => {
@@ -52,6 +81,7 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
       });
       const slices = await splitTurnaroundSheet(img.dataUrl);
       c.turnarounds = {
+        sheet: img.dataUrl,
         front: slices.front,
         threeQuarter: slices.threeQuarter,
         profile: slices.profile,
@@ -135,6 +165,13 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
                 value={prompts[ci]}
                 onChange={(e) => setPrompts({ ...prompts, [ci]: e.target.value })}
               />
+              {c.turnarounds?.sheet && (
+                <img
+                  className="turnaround-sheet"
+                  src={c.turnarounds.sheet}
+                  alt="turnaround sheet"
+                />
+              )}
               <div className="views">
                 {(['front', 'threeQuarter', 'profile', 'back'] as const).map((view) => (
                   <img
@@ -144,9 +181,23 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
                   />
                 ))}
               </div>
-              <button onClick={() => generateOne(ci)} disabled={loading[ci]}>
-                {c.turnarounds ? (loading[ci] ? 'Regenerating...' : 'Regenerate') : loading[ci] ? 'Generating...' : 'Generate'}
-              </button>
+              <div className="actions">
+                <button onClick={() => generateOne(ci)} disabled={loading[ci]}>
+                  {c.turnarounds ? (loading[ci] ? 'Regenerating...' : 'Regenerate') : loading[ci] ? 'Generating...' : 'Generate'}
+                </button>
+                {c.turnarounds?.sheet && (
+                  <button onClick={() => downloadSheet(ci)}>Download Sheet</button>
+                )}
+                <label className="upload-label">
+                  Upload Sheet
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={(e) => handleUpload(ci, e.target.files?.[0])}
+                  />
+                </label>
+              </div>
             </div>
           ))}
           <button onClick={() => setAccepted(true)}>Accept Turnarounds</button>
