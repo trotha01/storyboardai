@@ -32,7 +32,10 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
         ],
       });
       const content = res.choices[0].message.content;
-      const arr = JSON.parse(content);
+      // OpenAI may wrap JSON in Markdown code fences; extract the JSON portion
+      const match = content.match(/```(?:json)?\n([\s\S]*?)```/);
+      const jsonStr = match ? match[1] : content;
+      const arr = JSON.parse(jsonStr);
       const panels: Panel[] = arr.map((p: any, i: number) => ({
         id: crypto.randomUUID(),
         cutNumber: p.cutNumber ?? i + 1,

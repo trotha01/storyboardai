@@ -15,7 +15,12 @@ export default function PanelCard({ panel, onSelect, selected }: Props) {
         {panel.imageDataUrl ? (
           <img src={panel.imageDataUrl} className="panel-image" width={160} />
         ) : (
-          <div className="panel-image" style={{ width: 160, height: 100 }} />
+          <div
+            className="panel-image"
+            style={{ width: 160, height: 100, fontSize: 10, padding: 4 }}
+          >
+            {panel.imagePrompt}
+          </div>
         )}
       </td>
       <td>{panel.actionDialogue}</td>
