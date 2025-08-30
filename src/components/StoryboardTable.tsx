@@ -6,9 +6,15 @@ interface Props {
   panels: Panel[];
   onSelect: (p: Panel) => void;
   selectedId?: string;
+  onGenerateImage: (p: Panel) => void;
 }
 
-export default function StoryboardTable({ panels, onSelect, selectedId }: Props) {
+export default function StoryboardTable({
+  panels,
+  onSelect,
+  selectedId,
+  onGenerateImage,
+}: Props) {
   return (
     <table>
       <thead>
@@ -27,6 +33,7 @@ export default function StoryboardTable({ panels, onSelect, selectedId }: Props)
             panel={p}
             selected={p.id === selectedId}
             onSelect={() => onSelect(p)}
+            onGenerate={() => onGenerateImage(p)}
           />
         ))}
       </tbody>

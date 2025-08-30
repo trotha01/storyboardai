@@ -19,22 +19,30 @@ export default function Home() {
 
   const selectedPanel = project?.panels.find((p) => p.id === selectedId);
 
+  const buildImagePrompt = (panel: typeof project.panels[number]) =>
+    `${panel.imagePrompt}\nAction/Dialogue: ${panel.actionDialogue}\nNotes: ${panel.notes}`;
+
   const generateImages = async () => {
     if (!project) return;
     for (const panel of project.panels) {
-      try {
-        const res = await openaiImage(apiKey, {
-          model: project.imageModel,
-          prompt: panel.imagePrompt,
-          size: '1024x768',
-        });
-        const b64 = res.data[0].b64_json;
-        const dataUrl = `data:image/png;base64,${b64}`;
-        const processed = await postProcessImage(dataUrl);
-        updatePanel({ ...panel, imageDataUrl: processed });
-      } catch (e) {
-        console.error(e);
-      }
+      await generateImage(panel);
+    }
+  };
+
+  const generateImage = async (panel: typeof project.panels[number]) => {
+    if (!project) return;
+    try {
+      const res = await openaiImage(apiKey, {
+        model: project.imageModel,
+        prompt: buildImagePrompt(panel),
+        size: '1536x1024',
+      });
+      const b64 = res.data[0].b64_json;
+      const dataUrl = `data:image/png;base64,${b64}`;
+      const processed = await postProcessImage(dataUrl);
+      updatePanel({ ...panel, imageDataUrl: processed });
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -68,12 +76,14 @@ export default function Home() {
             panels={project.panels}
             onSelect={(p) => setSelectedId(p.id)}
             selectedId={selectedId}
+            onGenerateImage={generateImage}
           />
           <FooterStats panels={project.panels} />
           {selectedPanel && (
             <EditorSidebar
               panel={selectedPanel}
               onChange={(p) => updatePanel(p)}
+              onGenerate={generateImage}
             />
           )}
         </>

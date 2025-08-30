@@ -4,9 +4,10 @@ import { Panel } from '../models/schema';
 interface Props {
   panel: Panel;
   onChange: (p: Panel) => void;
+  onGenerate: (p: Panel) => void;
 }
 
-export default function EditorSidebar({ panel, onChange }: Props) {
+export default function EditorSidebar({ panel, onChange, onGenerate }: Props) {
   const [actionDialogue, setAction] = useState(panel.actionDialogue);
   const [notes, setNotes] = useState(panel.notes);
   const [time, setTime] = useState(panel.timeSeconds);
@@ -30,6 +31,13 @@ export default function EditorSidebar({ panel, onChange }: Props) {
         onChange={(e) => setTime(parseFloat(e.target.value))}
       />
       <button onClick={apply}>Apply</button>
+      <button
+        onClick={() =>
+          onGenerate({ ...panel, actionDialogue, notes, timeSeconds: time })
+        }
+      >
+        {panel.imageDataUrl ? 'Regenerate Image' : 'Generate Image'}
+      </button>
     </div>
   );
 }
