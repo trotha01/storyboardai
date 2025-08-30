@@ -19,6 +19,7 @@ declare module 'localforage';
 declare module 'jszip';
 declare module 'jspdf';
 declare module 'html2canvas';
+declare module 'vite/client';
 declare module 'zod' {
   export const z: any;
   namespace z {

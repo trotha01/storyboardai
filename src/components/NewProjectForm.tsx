@@ -3,7 +3,6 @@ import { Panel, Project, StyleBible } from '../models/schema';
 import { openaiChat, generateImage } from '../lib/openai';
 import { PLANNER_SYSTEM, plannerUserPrompt } from '../prompts/planner';
 import { defaultStyleBible } from '../state/useStore';
-import { generateTurnarounds } from '../lib/turnarounds';
 import { turnaroundPrompt } from '../prompts/turnarounds';
 
 interface Props {
@@ -18,61 +17,71 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
   const [styleBible, setStyleBible] = useState(
     JSON.parse(JSON.stringify(defaultStyleBible))
   );
-  const [turnLoading, setTurnLoading] = useState(false);
   const [turnReady, setTurnReady] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const [storyLoading, setStoryLoading] = useState(false);
-  const genTurnarounds = async () => {
+  const [prompts, setPrompts] = useState<Record<number, Record<string, string>>>({});
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+
+  const prepareTurnarounds = () => {
+    const p: Record<number, Record<string, string>> = {};
+    styleBible.characters.forEach((c, ci) => {
+      p[ci] = {};
+      (['front', 'threeQuarter', 'profile', 'back'] as const).forEach((view) => {
+        p[ci][view] = turnaroundPrompt(styleBible.world, c, view);
+      });
+      (['neutral', 'smile', 'concern'] as const).forEach((expr) => {
+        p[ci][`expr-${expr}`] = turnaroundPrompt(
+          styleBible.world,
+          c,
+          'front',
+          expr
+        );
+      });
+    });
+    setPrompts(p);
+    setTurnReady(true);
+  };
+
+  const generateOne = async (ci: number, key: string) => {
+    const prompt = prompts[ci][key];
+    if (!prompt) return;
     if (!apiKey) {
       alert('API key required');
       return;
     }
-    setTurnLoading(true);
-    try {
-      const proj: Project = {
-        projectTitle: title,
-        pageSize: 'A4',
-        textModel: 'gpt-4o-mini',
-        imageModel: 'gpt-image-1',
-        styleBible,
-        panels: [],
-      };
-      await generateTurnarounds(proj, apiKey);
-      setStyleBible({ ...proj.styleBible });
-      setTurnReady(true);
-    } catch (e) {
-      console.error(e);
-      alert('Failed to generate turnarounds');
-    } finally {
-      setTurnLoading(false);
-    }
-  };
-
-  const regenerate = async (
-    ci: number,
-    view: 'front' | 'threeQuarter' | 'profile' | 'back'
-  ) => {
+    const loadingKey = `${ci}-${key}`;
+    setLoading({ ...loading, [loadingKey]: true });
     try {
       const c = styleBible.characters[ci];
-      const prompt = turnaroundPrompt(styleBible.world, c, view as any);
       const img = await generateImage({
         apiKey,
         model: 'gpt-image-1',
         prompt,
         size: '1024x1024',
+        seed: c.seedHint,
       });
-      c.turnarounds = c.turnarounds || {
-        front: null,
-        threeQuarter: null,
-        profile: null,
-        back: null,
-        expressions: {},
-      };
-      (c.turnarounds as any)[view] = img.dataUrl;
+      c.turnarounds =
+        c.turnarounds || {
+          front: null,
+          threeQuarter: null,
+          profile: null,
+          back: null,
+          expressions: {},
+        };
+      if (key.startsWith('expr-')) {
+        const expr = key.replace('expr-', '') as 'neutral' | 'smile' | 'concern';
+        c.turnarounds.expressions = c.turnarounds.expressions || {};
+        c.turnarounds.expressions[expr] = img.dataUrl;
+      } else {
+        (c.turnarounds as any)[key] = img.dataUrl;
+      }
       setStyleBible({ ...styleBible });
     } catch (e) {
       console.error(e);
-      alert('Failed to regenerate view');
+      alert('Failed to generate view');
+    } finally {
+      setLoading({ ...loading, [loadingKey]: false });
     }
   };
 
@@ -133,25 +142,74 @@ export default function NewProjectForm({ apiKey, onCreate }: Props) {
         onChange={(e) => setCount(parseInt(e.target.value, 10))}
       />
       {!turnReady && (
-        <button onClick={genTurnarounds} disabled={turnLoading}>
-          {turnLoading ? 'Generating...' : 'Generate Turnarounds'}
-        </button>
+        <button onClick={prepareTurnarounds}>Prepare Turnaround Prompts</button>
       )}
       {turnReady && !accepted && (
         <div className="turnarounds">
           {styleBible.characters.map((c, ci) => (
             <div key={c.name} className="character-turnarounds">
               <h4>{c.name}</h4>
-              {(['front', 'threeQuarter', 'profile', 'back'] as const).map(
-                (view) => (
-                  <div key={view}>
-                    {c.turnarounds && (
-                      <img src={(c.turnarounds as any)[view]} alt={view} />
-                    )}
-                    <button onClick={() => regenerate(ci, view)}>Regenerate</button>
-                  </div>
-                )
-              )}
+              {(['front', 'threeQuarter', 'profile', 'back'] as const).map((view) => (
+                <div key={view}>
+                  <textarea
+                    value={prompts[ci][view]}
+                    onChange={(e) =>
+                      setPrompts({
+                        ...prompts,
+                        [ci]: { ...prompts[ci], [view]: e.target.value },
+                      })
+                    }
+                  />
+                  {c.turnarounds && (c.turnarounds as any)[view] && (
+                    <img src={(c.turnarounds as any)[view]} alt={view} />
+                  )}
+                  <button
+                    onClick={() => generateOne(ci, view)}
+                    disabled={loading[`${ci}-${view}`]}
+                  >
+                    {c.turnarounds && (c.turnarounds as any)[view]
+                      ? loading[`${ci}-${view}`]
+                        ? 'Regenerating...'
+                        : 'Regenerate'
+                      : loading[`${ci}-${view}`]
+                      ? 'Generating...'
+                      : 'Generate'}
+                  </button>
+                </div>
+              ))}
+              <div className="expressions">
+                {(['neutral', 'smile', 'concern'] as const).map((expr) => {
+                  const key = `expr-${expr}`;
+                  return (
+                    <div key={key}>
+                      <textarea
+                        value={prompts[ci][key]}
+                        onChange={(e) =>
+                          setPrompts({
+                            ...prompts,
+                            [ci]: { ...prompts[ci], [key]: e.target.value },
+                          })
+                        }
+                      />
+                      {c.turnarounds?.expressions?.[expr] && (
+                        <img src={c.turnarounds.expressions[expr] || undefined} alt={expr} />
+                      )}
+                      <button
+                        onClick={() => generateOne(ci, key)}
+                        disabled={loading[`${ci}-${key}`]}
+                      >
+                        {c.turnarounds?.expressions?.[expr]
+                          ? loading[`${ci}-${key}`]
+                            ? 'Regenerating...'
+                            : 'Regenerate'
+                          : loading[`${ci}-${key}`]
+                          ? 'Generating...'
+                          : 'Generate'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           ))}
           <button onClick={() => setAccepted(true)}>Accept Turnarounds</button>
