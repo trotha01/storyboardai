@@ -1,0 +1,1 @@
+export const editorSystemPrompt = `You update a single storyboard panel while preserving continuity with neighbors. Adjust actionDialogue, notes, and imagePrompt per the user’s change. Keep blocking and camera unless explicitly changed. Output only that panel as JSON.`;
