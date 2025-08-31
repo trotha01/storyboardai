@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import TopBar from '../components/TopBar';
-import StoryboardTable from '../components/StoryboardTable';
+import StoryboardRow from '../components/StoryboardRow';
 import EditorSidebar from '../components/EditorSidebar';
 import NewProjectForm from '../components/NewProjectForm';
 import FooterStats from '../components/FooterStats';
@@ -9,6 +9,7 @@ import { exportPdf } from '../lib/pdf';
 import { postProcessImage } from '../lib/imagePost';
 import type { Panel } from '../models/schema';
 import { generatePanelImage } from '../lib/panels';
+import { toast } from 'sonner';
 
 export default function Home() {
   const [apiKey, setApiKey] = useState('');
@@ -40,10 +41,44 @@ export default function Home() {
       );
       const processed = await postProcessImage(res.dataUrl);
       updatePanel({ ...panel, imageDataUrl: processed });
+      toast.success(`Generated image for cut ${panel.cutNumber}`);
     } catch (e) {
       console.error(e);
+      toast.error(`Failed to generate image for cut ${panel.cutNumber}`);
     }
   };
+
+  // keyboard shortcuts
+  React.useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        generateImages();
+      } else if (e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        const p = selectedPanel;
+        if (p) {
+          const idx = project?.panels.findIndex((x: Panel) => x.id === p.id) || 0;
+          generateImage(p, project?.panels[idx - 1]);
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!project) return;
+        const currentIdx = project.panels.findIndex((p) => p.id === selectedId);
+        const next = project.panels[currentIdx + 1];
+        if (next) setSelectedId(next.id);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (!project) return;
+        const currentIdx = project.panels.findIndex((p) => p.id === selectedId);
+        const prev = project.panels[currentIdx - 1];
+        if (prev) setSelectedId(prev.id);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [generateImages, generateImage, selectedId, selectedPanel, project]);
 
   return (
     <div className="app">
@@ -54,7 +89,7 @@ export default function Home() {
         onSave={() => project && console.log('save', project)}
         onLoad={() => console.log('load')}
         onExportPdf={() => {
-          const element = document.querySelector('table');
+          const element = document.querySelector('section');
           if (element)
             exportPdf(
               element as HTMLElement,
@@ -78,15 +113,20 @@ export default function Home() {
       )}
       {project && (
         <>
-          <StoryboardTable
-            panels={project.panels}
-            onSelect={(p) => setSelectedId(p.id)}
-            selectedId={selectedId}
-            onGenerateImage={(p) => {
-              const idx = project.panels.findIndex((x) => x.id === p.id);
-              generateImage(p, project.panels[idx - 1]);
-            }}
-          />
+          <section className="mx-auto max-w-6xl px-4 py-6 space-y-4">
+            {project.panels.map((row) => (
+              <StoryboardRow
+                key={row.id}
+                row={row}
+                onGenerate={(p) => {
+                  const idx = project.panels.findIndex((x) => x.id === p.id);
+                  return generateImage(p, project.panels[idx - 1]);
+                }}
+                onChange={(p) => updatePanel(p)}
+                onSelect={() => setSelectedId(row.id)}
+              />
+            ))}
+          </section>
           <FooterStats panels={project.panels} />
           {selectedPanel && (
             <EditorSidebar

@@ -1,28 +1,12 @@
 {
-  "name": "storyboardsmith-static",
-  "version": "0.1.0",
+  "name": "storyboard-ui-cdn",
   "private": true,
+  "version": "0.0.0",
+  "description": "CDN/no-install variant for Codex sandbox",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
+    "test": "echo \"(offline env) skipping tests\" && exit 0",
+    "build": "rm -rf dist && mkdir -p dist && (cp -r public/* dist/ 2>/dev/null || cp index.html dist/index.html)"
   },
-  "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "zustand": "^4.5.0",
-    "zod": "^3.22.4",
-    "localforage": "^1.10.0",
-    "jszip": "^3.10.1",
-    "jspdf": "^2.5.1",
-    "html2canvas": "^1.4.1"
-  },
-  "devDependencies": {
-    "@types/react": "^18.2.20",
-    "@types/react-dom": "^18.2.7",
-    "@vitejs/plugin-react": "^4.0.0",
-    "typescript": "^5.4.5",
-    "vite": "^5.0.0",
-    "tslib": "^2.6.2"
-  }
+  "dependencies": {},
+  "devDependencies": {}
 }

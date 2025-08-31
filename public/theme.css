@@ -1,0 +1,36 @@
+:root{
+  /* neutrals */
+  --bg: #FFFBF5;            /* warm paper */
+  --surface: #FFFFFF;
+  --ink: #1F2937;           /* slate-800 */
+  --muted-ink: #475569;     /* slate-600 */
+  --stroke: #E5E7EB;        /* gray-200 */
+
+  /* "juicy" accents */
+  --accent: #FF6B6B;        /* guava (primary CTA) */
+  --accent-ink: #3D0B0B;
+  --accent-2: #2EC4B6;      /* lagoon (secondary) */
+  --accent-3: #FFC64D;      /* mango (sparingly) */
+
+  /* states */
+  --success: #22C55E;
+  --warn:    #F59E0B;
+  --danger:  #EF4444;
+  --focus:   #3B82F6;
+}
+
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0B0F14; --surface:#0F1520; --ink:#E5E7EB; --muted-ink:#94A3B8; --stroke:#1F2937;
+  }
+}
+
+/* Type scale */
+:root{
+  --font-sans: ui-sans-serif, system-ui, Inter, "SF Pro Text", Roboto, Arial, sans-serif;
+  --fs-0: 0.875rem; /* 14 */
+  --fs-1: 1rem;     /* 16 */
+  --fs-2: 1.125rem; /* 18 */
+  --fs-3: 1.375rem; /* 22 */
+  --fs-4: 1.75rem;  /* 28 */
+}
