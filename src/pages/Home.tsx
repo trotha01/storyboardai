@@ -9,6 +9,7 @@ import { exportPdf } from '../lib/pdf';
 import { postProcessImage } from '../lib/imagePost';
 import type { Panel } from '../models/schema';
 import { generatePanelImage } from '../lib/panels';
+import { toast } from 'react-hot-toast';
 
 export default function Home() {
   const [apiKey, setApiKey] = useState('');
@@ -40,8 +41,10 @@ export default function Home() {
       );
       const processed = await postProcessImage(res.dataUrl);
       updatePanel({ ...panel, imageDataUrl: processed });
+      toast.success(`Generated image for cut ${panel.cutNumber}`);
     } catch (e) {
       console.error(e);
+      toast.error(`Failed to generate image for cut ${panel.cutNumber}`);
     }
   };
 
