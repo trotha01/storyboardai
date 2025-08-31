@@ -9,7 +9,7 @@ import { exportPdf } from '../lib/pdf';
 import { postProcessImage } from '../lib/imagePost';
 import type { Panel } from '../models/schema';
 import { generatePanelImage } from '../lib/panels';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export default function Home() {
   const [apiKey, setApiKey] = useState('');

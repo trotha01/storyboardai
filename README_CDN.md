@@ -1,6 +1,6 @@
 # CDN build mode
 
-This repository is configured to run without downloading npm packages. The app is served from static files that import React, Tailwind CSS, and react-hot-toast via CDN/ESM links.
+This repository is configured to run without downloading npm packages. The app is served from static files that import React, Tailwind CSS, and the Sonner toast library via CDN/ESM links.
 
 - `public/index.html` is a standalone entry point.
 - `package.json` contains offline-friendly scripts so `npm install`, `npm test`, and `npm run build` all succeed without external network access.
