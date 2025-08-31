@@ -1,48 +1,40 @@
-import React from 'react';
-import { Panel } from '../models/schema';
+import React, { useState } from 'react';
+import Button from './Button';
+import Spinner from './Spinner';
+import type { Panel } from '../models/schema';
 
 interface Props {
-  key?: any;
-  panel: Panel;
-  onSelect: () => void;
-  selected: boolean;
-  onGenerate: () => void;
+  row: Panel;
+  onGenerate: (p: Panel) => Promise<void> | void;
 }
 
-export default function PanelCard({ panel, onSelect, selected, onGenerate }: Props) {
+export default function PanelCard({ row, onGenerate }: Props) {
+  const [loading, setLoading] = useState(false);
+  const handleGenerate = async () => {
+    setLoading(true);
+    await onGenerate(row);
+    setLoading(false);
+  };
   return (
-    <tr onClick={onSelect} style={{ background: selected ? '#eef' : undefined }}>
-      <td>{panel.cutNumber}</td>
-      <td>
-        {panel.imageDataUrl ? (
-          <img
-            src={panel.imageDataUrl}
-            className="panel-image"
-            width={192}
-            height={128}
-          />
+    <div>
+      <div className="relative aspect-video rounded-xl bg-[#111] overflow-hidden ring-4 ring-black/80">
+        {loading && <div className="absolute inset-x-0 top-0 h-1 bg-[var(--accent)] animate-pulse" />}
+        {row.imageDataUrl ? (
+          <img src={row.imageDataUrl} className="w-full h-full object-cover" alt={`Cut ${row.id}`} />
         ) : (
-          <div
-            className="panel-image"
-            style={{ width: 192, height: 128, fontSize: 10, padding: 4 }}
-          >
-            {panel.imagePrompt}
-          </div>
+          <div className="grid place-content-center h-full text-white/70">No image</div>
         )}
-        <div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onGenerate();
-            }}
-          >
-            {panel.imageDataUrl ? 'Regenerate' : 'Generate'}
-          </button>
-        </div>
-      </td>
-      <td>{panel.actionDialogue}</td>
-      <td>{panel.notes}</td>
-      <td>{panel.timeSeconds.toFixed(1)}</td>
-    </tr>
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        <Button variant="primary" onClick={handleGenerate} aria-label={`Generate image for cut ${row.cutNumber}`}>
+          {row.imageDataUrl ? 'Regenerate' : 'Generate'}
+        </Button>
+        <Button variant="ghost">Edit Prompt</Button>
+        {loading && <Spinner label="Generating…" />}
+      </div>
+
+      <div className="mt-2 text-[var(--muted-ink)] text-[var(--fs-0)]">Cut #{row.cutNumber}</div>
+    </div>
   );
 }
